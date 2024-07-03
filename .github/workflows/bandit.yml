@@ -12,7 +12,7 @@ on:
   workflow_call:
 
 jobs:
-  analyze:
+  bandit-scan:
     runs-on: ubuntu-latest
     permissions:
       security-events: write
