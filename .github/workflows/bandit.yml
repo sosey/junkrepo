@@ -46,8 +46,9 @@ jobs:
           ADDED_FILES: ${{ steps.get-changed-notebooks.outputs.added_files }}     
         run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
       - name: Perform Bandit Analysis
-        uses: PyCQA/bandit-action@v1
+        run: bandit -c pyproject.toml -f sarif -o results.sarf --severity-level high -r .
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          confidence: 'high'
-          exclude: "*.txt,.git,.github,.eggs,*.egg,.gitignore,*.yml"
+          sarif_file: results.sarif
 
