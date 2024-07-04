@@ -24,6 +24,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      
       - name: Get changed notebooks
         id: get-changed-notebooks
         uses: tj-actions/changed-files@v44.5.5
@@ -32,23 +33,29 @@ jobs:
           safe_output: false #set to false because we are using an environment variable to store the output and avoid command injection.
           files: |
             **/*.ipynb    
+      
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ vars.PYTHON_VERSION }}
           cache: 'pip'
+      
       - name: Install bandit
         run: pip install bandit bandit-sarif-formatter
+      
       - name: Install nbconvert
         if: steps.get-changed-notebooks.outputs.any_changed == 'true'
         run: pip install nbconvert
+      
       - name: Convert Jupyter notebooks
         if: steps.get-changed-notebooks.outputs.any_changed == 'true'
         env:
           ADDED_FILES: ${{ steps.get-changed-notebooks.outputs.added_files }}     
         run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
+      
       - name: Perform Bandit Analysis
-        run: bandit --format sarif -o results.sarf --severity-level high -r .
+        run: bandit --format sarif -o results.sarif --severity-level high -r .
+      
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
