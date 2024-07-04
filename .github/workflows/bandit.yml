@@ -37,6 +37,8 @@ jobs:
         with:
           python-version: ${{ vars.PYTHON_VERSION }}
           cache: 'pip'
+      - name: Install bandit
+        run: pip install bandit bandit-sarif-formatter
       - name: Install nbconvert
         if: steps.get-changed-notebooks.outputs.any_changed == 'true'
         run: pip install nbconvert
@@ -46,7 +48,7 @@ jobs:
           ADDED_FILES: ${{ steps.get-changed-notebooks.outputs.added_files }}     
         run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
       - name: Perform Bandit Analysis
-        run: bandit -c pyproject.toml -f sarif -o results.sarf --severity-level high -r .
+        run: bandit --format sarif -o results.sarf --severity-level high -r .
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
         with:
