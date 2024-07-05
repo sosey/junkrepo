@@ -1,25 +1,65 @@
-name: bandit
+## This runs bandit checks on all jupyter notebooks and python files
+name: BanditEverything
 
 on:
   pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
-  workflow_call:
+    branches: [ $default-branch, $protected-branches ]
+
+  push:  # to catch folks that are commiting directly
+    branches: [ $default-branch, $protected-branches ]
+
+  branch_protection_rule:
+    types: [created, deleted]
+
+  workflow_call:  # allows for a manual run from Actions tab
+
 
 jobs:
-  analyze:
+  bandit-scan:
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
+      security-events: write # so that the sarif file can be uploaded
       # only required for workflows in private repositories
       actions: read
       contents: read
     steps:
-      - name: Perform Bandit Analysis
-        uses: PyCQA/bandit-action@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get changed notebooks
+        id: get-changed-notebooks
+        if: github.event.schedule == '00 1 * * 7'
+        uses: tj-actions/changed-files@v44.5.5
         with:
-          configfile: 'bandit.yaml'
-          confidence: 'high'
+          separator: " " # nbconvert accepts space separated file list
+          safe_output: false #set to false because we are using an environment variable to store the output and avoid command injection.
+          files: |
+            **/*.ipynb    
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ vars.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install Bandit
+        run: pip install bandit bandit-sarif-formatter
+      
+      - name: Install nbconvert
+        if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
+        run: pip install nbconvert ipython
+      
+      - name: Convert Jupyter notebooks
+        if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
+        env:
+          ADDED_FILES: ${{ steps.get-changed-notebooks.outputs.all_changed_files }}     
+        run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
+      
+      - name: Perform Bandit Analysis
+        run: bandit --format sarif -o results.sarif --confidence-level high -r .
+      
+      - name: Upload SARIF file to Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
