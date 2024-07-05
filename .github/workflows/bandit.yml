@@ -45,7 +45,7 @@ jobs:
       
       - name: Install nbconvert
         if: steps.get-changed-notebooks.outputs.any_changed == 'true'
-        run: pip install nbconvert
+        run: pip install nbconvert ipython
       
       - name: Convert Jupyter notebooks
         if: steps.get-changed-notebooks.outputs.any_changed == 'true'
@@ -54,7 +54,8 @@ jobs:
         run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
       
       - name: Perform Bandit Analysis
-        run: bandit --format sarif -o results.sarif --severity-level high -r .
+        run: bandit --format sarif -o results.sarif --confidence-level high -r .
+        run: echo results.sarif
       
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v3
