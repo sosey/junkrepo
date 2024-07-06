@@ -3,15 +3,28 @@ name: BanditEverything
 
 on:
   pull_request:
-    branches: [ $default-branch, $protected-branches ]
+    branches: 
+      - '*'
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
 
-  push:  # to catch folks that are commiting directly
-    branches: [ $default-branch, $protected-branches ]
+
+  push:  # to catch dirext commits
+    branches:
+      - main 
 
   branch_protection_rule:
     types: [created, deleted]
 
-  workflow_call:  # allows for a manual run from Actions tab
+  concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+  workflow_call:  # dispatch only works on default branch
 
 
 jobs:
@@ -28,11 +41,10 @@ jobs:
 
       - name: Get changed notebooks
         id: get-changed-notebooks
-        if: github.event.schedule == '00 1 * * 7'
         uses: tj-actions/changed-files@v44.5.5
         with:
           separator: " " # nbconvert accepts space separated file list
-          safe_output: false #set to false because we are using an environment variable to store the output and avoid command injection.
+          safe_output: true
           files: |
             **/*.ipynb    
       
