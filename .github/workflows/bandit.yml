@@ -71,8 +71,7 @@ jobs:
         run: bandit --format sarif -o results.sarif --confidence-level high -r .
       
       - name: Upload SARIF file to Security
-        needs: bandit-run
-        if: ${{ needs.bandit-run.result == success() }}
+        if: ${{ steps.bandit-run.result == success() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
