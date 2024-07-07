@@ -60,16 +60,19 @@ jobs:
         if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
         run: pip install nbconvert ipython
       
-      - name: Convert Jupyter notebooks
+      - name: Convert Jupyter notebooks 
         if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
         env:
           ADDED_FILES: ${{ steps.get-changed-notebooks.outputs.all_changed_files }}     
         run: jupyter nbconvert --allow-errors --sanitize-html --to script $ADDED_FILES        
       
       - name: Perform Bandit Analysis
+        id: bandit-run
         run: bandit --format sarif -o results.sarif --confidence-level high -r .
       
       - name: Upload SARIF file to Security
+        needs: bandit-run
+        if: ${{ needs.bandit-run.result == success() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
