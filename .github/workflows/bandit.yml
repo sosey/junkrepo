@@ -20,12 +20,11 @@ on:
   branch_protection_rule:
     types: [created, deleted]
 
-  concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
-
   workflow_call:  # dispatch only works on default branch
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   bandit-scan:
