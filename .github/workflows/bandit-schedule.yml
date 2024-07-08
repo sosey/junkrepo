@@ -5,7 +5,7 @@ name: ScheduledBandit
 
 on:
   schedule:
-    - cron: '10 17 * * 1'  
+    - cron: "0 1 * * 0"  
 
   branch_protection_rule:
     types: [created, deleted]
@@ -64,6 +64,6 @@ jobs:
         if: ${{ failure() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif-file: results.sarif
+          sarif_file: results.sarif
 
 
