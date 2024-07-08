@@ -5,7 +5,7 @@ name: ScheduledBandit
 
 on:
   schedule:
-    - cron: '0 1 * * 0'  # at 1 every sunday
+    - cron: '0 17 * * 1'  
 
   branch_protection_rule:
     types: [created, deleted]
@@ -61,7 +61,7 @@ jobs:
         run: bandit --format sarif -o results.sarif --confidence-level high -r .
       
       - name: Upload sarif to security
-        if: ${{ steps.bandit-run.outcome == "success" }}
+        if: ${{ failure() }}
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif-file: results.sarif
