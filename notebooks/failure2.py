@@ -5,3 +5,5 @@ def test_bad_except():
         cfg_file = os.path.join(os.getcwd(), 'notafile')
         try:
             print("no except clause")
+        except:
+            pass
