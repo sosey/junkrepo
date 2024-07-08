@@ -73,7 +73,6 @@ jobs:
         with:
           name: ${{ env.BANDIT_ARTIFACT }}
           overwrite: true
-          path: ./
           retention-days: 30
 
 
