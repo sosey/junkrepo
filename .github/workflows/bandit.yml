@@ -68,6 +68,7 @@ jobs:
         run: bandit --format json -o $BANDIT_ARTIFACT --confidence-level high -r .
       
       - name: Upload artifact
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.BANDIT_ARTIFACT }}
