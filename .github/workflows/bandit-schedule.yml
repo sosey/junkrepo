@@ -5,7 +5,7 @@ name: ScheduledBandit
 
 on:
   schedule:
-    - cron: '0 17 * * 1'  
+    - cron: '10 17 * * 1'  
 
   branch_protection_rule:
     types: [created, deleted]
