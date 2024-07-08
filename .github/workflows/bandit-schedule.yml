@@ -1,29 +1,28 @@
-## This runs bandit checks on all PRs and upload artifact
-name: BanditEverything
+## This runs bandit checks on all jupyter notebooks and python files
+## on a schedule for the default branch, listed as main, and then
+## uploads results to security
+
+name: Scheduled Bandit Execution on Main
 
 on:
-  pull_request: 
-    branches: 
-      - '*'
-    types:
-      - opened
-      - reopened
-      - synchronize
+  push:  # to catch direct commits
+    branches:
+      - main
 
-  workflow_call:
+  schedule: 
+    - cron: '0 1 * * 7'. # at 1am on sundays
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  branch_protection_rule:
+    types: [created, deleted]
+
+  workflow_dispatch:  # manual run, workflow must be in default branch
+
 
 jobs:
   bandit-scan:
     runs-on: ubuntu-latest
-    env:
-      ARTIFACT: results
-      PR_NUMBER: ${{ github.event.number }
     permissions:
-      # only required for workflows in private repositories, remaining set to none
+      # only required for workflows in private repositories
       actions: read
       contents: read
     steps:
@@ -49,7 +48,7 @@ jobs:
         run: |
           python --version
           python -m pip install --upgrade pip
-          pip install bandit
+          pip install bandit bandit-sarif-formatter
       
       - name: Install nbconvert
         if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
@@ -63,17 +62,12 @@ jobs:
       
       - name: Perform Bandit Analysis
         id: bandit-run
-        run: |
-          echo "$ARTIFACT_NAME=$ARTIFACT-$PR_NUMBER.json" >> $GIHTUB_ENV
-          bandit --format json -o $ARTIFACT_NAME --confidence-level high -r .
+        run: bandit --format sarif -o results.sarif --confidence-level high -r .
       
-      - name: Upload artifact
-        if: ${{ steps.bandit-run.conclusion == 'success' }}
-        uses: actions/upload-artifact@v4
+      - name: Upload sarif to security
+        if: ${{ steps.bandit-run.outcome == "success" }}
+        uses: github/codeql-action/upload-sarif@v3
           with:
-            name: ${{ env.ARTIFACT_NAME }}
-            overwrite: true
-            path: ./
-            retention-days: 30
+            sarif-file: results.sarif-file
 
 
