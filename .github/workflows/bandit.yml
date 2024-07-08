@@ -4,7 +4,7 @@ name: BanditEverything
 on:
   pull_request: 
     branches: 
-      - '*'
+      - main
     types:
       - opened
       - reopened
@@ -20,8 +20,8 @@ jobs:
   bandit-scan:
     runs-on: ubuntu-latest
     env:
-      ARTIFACT: results
-      PR_NUMBER: ${{ github.event.number }
+      ARTIFACT_ROOT: results
+      PR_NUMBER: ${{ github.event.number }}
     permissions:
       # only required for workflows in private repositories, remaining set to none
       actions: read
@@ -46,10 +46,12 @@ jobs:
           cache: 'pip'
       
       - name: Install Bandit
+        id: install-bandit
         run: |
           python --version
           python -m pip install --upgrade pip
           pip install bandit
+          echo "BANDIT_ARTIFACT=$ARTIFACT_ROOT.$PR_NUMBER.json" >> "$GITHUB_ENV"
       
       - name: Install nbconvert
         if: ${{ steps.get-changed-notebooks.outputs.any_changed == 'true' }}
@@ -63,17 +65,14 @@ jobs:
       
       - name: Perform Bandit Analysis
         id: bandit-run
-        run: |
-          echo "$ARTIFACT_NAME=$ARTIFACT-$PR_NUMBER.json" >> $GIHTUB_ENV
-          bandit --format json -o $ARTIFACT_NAME --confidence-level high -r .
+        run: bandit --format json -o $BANDIT_ARTIFACT --confidence-level high -r .
       
       - name: Upload artifact
-        if: ${{ steps.bandit-run.conclusion == 'success' }}
         uses: actions/upload-artifact@v4
-          with:
-            name: ${{ env.ARTIFACT_NAME }}
-            overwrite: true
-            path: ./
-            retention-days: 30
+        with:
+          name: ${{ env.BANDIT_ARTIFACT }}
+          overwrite: true
+          path: ./
+          retention-days: 30
 
 

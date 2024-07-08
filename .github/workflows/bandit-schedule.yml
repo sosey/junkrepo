@@ -1,20 +1,15 @@
 ## This runs bandit checks on all jupyter notebooks and python files
 ## on a schedule for the default branch, listed as main, and then
-## uploads results to security
-
-name: Scheduled Bandit Execution on Main
+## uploads the results so that can be seen in the security tab
+name: ScheduledBandit
 
 on:
-  push:  # to catch direct commits
-    branches:
-      - main
-
-  schedule: 
-    - cron: '0 1 * * 7'. # at 1am on sundays
+  schedule:
+    - cron: '0 1 * * 0'  # at 1 every sunday
 
   branch_protection_rule:
     types: [created, deleted]
-
+  
   workflow_dispatch:  # manual run, workflow must be in default branch
 
 
@@ -25,6 +20,7 @@ jobs:
       # only required for workflows in private repositories
       actions: read
       contents: read
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,7 +63,7 @@ jobs:
       - name: Upload sarif to security
         if: ${{ steps.bandit-run.outcome == "success" }}
         uses: github/codeql-action/upload-sarif@v3
-          with:
-            sarif-file: results.sarif-file
+        with:
+          sarif-file: results.sarif
 
 
